@@ -22,6 +22,12 @@ export class User {
   @Column()
   password: string;
 
+  @Column({nullable: true})
+  resetPasswordToken?: string
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetTokenExpire?: Date
+
   // Automatically generate UUID before inserting into the database
   @BeforeInsert()
   generateUuid() {

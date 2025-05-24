@@ -1,16 +1,20 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { v4 as uuidv4 } from 'uuid';
+import { MailService } from '../mail/mail.service';
+
 
 @Injectable()
 export class AuthService {
@@ -18,6 +22,7 @@ export class AuthService {
     @InjectRepository(User) //It tells NestJS to inject the TypeORM repository for the User entity.
     private userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private mailService: MailService
   ) {}
 
   async register(dto: RegisterDto) {
@@ -74,5 +79,26 @@ export class AuthService {
         lastName: user.lastName,
       },
     };
+  }
+
+  async requestPasswordReset(email: string){
+    const user = await this.userRepository.findOne({
+      where: {
+        email
+      }
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const token = uuidv4();
+    user.resetPasswordToken = token;
+    user.resetTokenExpire = new Date(Date.now() + 3600000) //1 hour
+    await this.userRepository.save(user);
+
+    await this.mailService.sendPasswordReset(email,token);
+    return {
+      message: 'A password reset link has been send your email address'
+    }
   }
 }
