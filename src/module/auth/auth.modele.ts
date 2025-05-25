@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -15,9 +14,8 @@ import { MailModule } from '../mail/mail.module';
       secret: 'supersecret',
       signOptions: { expiresIn: '1d' },
     }),
-    MailModule
   ],
   providers: [AuthService],
   controllers: [AuthController],
 })
-export class UserModule {}
+export class AuthModule {}

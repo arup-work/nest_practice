@@ -14,6 +14,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from '../mail/mail.service';
+import { MailQueueService } from '../mail-queue/mail-queue.service';
 
 
 @Injectable()
@@ -22,7 +23,8 @@ export class AuthService {
     @InjectRepository(User) //It tells NestJS to inject the TypeORM repository for the User entity.
     private userRepository: Repository<User>,
     private readonly jwtService: JwtService,
-    private mailService: MailService
+    private mailService: MailService,
+    private mailQueueService: MailQueueService
   ) {}
 
   async register(dto: RegisterDto) {
@@ -42,6 +44,9 @@ export class AuthService {
       password: hashedPassword,
     });
     const savedUser = await this.userRepository.save(user);
+
+    // Send a welcome email
+    await this.mailQueueService.queueWelcomeEmail(dto.email,`${dto.firstName} ${dto.lastName}`)
 
     // Remove the password from the response
     const { password, id, ...userWithoutPassword } = savedUser;
@@ -96,7 +101,7 @@ export class AuthService {
     user.resetTokenExpire = new Date(Date.now() + 3600000) //1 hour
     await this.userRepository.save(user);
 
-    await this.mailService.sendPasswordReset(email,token);
+    await this.mailQueueService.queueForgetPassword(email,token);
     return {
       message: 'A password reset link has been send your email address'
     }
