@@ -106,4 +106,42 @@ export class AuthService {
       message: 'A password reset link has been send your email address'
     }
   }
+
+  async validateResetToken(token: string){
+    const user = await this.userRepository.findOne({
+      where: {
+        resetPasswordToken: token,
+        resetTokenExpire: MoreThan(new Date())
+      }
+    });
+
+    if (!user) {
+      return { valid: false}
+    }
+
+    return { valid: true}
+  }
+
+  async passwordReset(token: string, password: string){
+      const user = await this.userRepository.findOne({
+        where: {
+          resetPasswordToken: token,
+          resetTokenExpire: MoreThan(new Date())
+        }
+      });
+
+      if (!user) {
+        throw new BadRequestException('Invalid or expired token')
+      }
+
+      user.password = await bcrypt.hash(password, 10);
+      user.resetPasswordToken = null;
+      user.resetTokenExpire = null;
+
+      await this.userRepository.save(user);
+
+      return {
+        message: 'Password has been successfully reset'
+      }
+  }
 }

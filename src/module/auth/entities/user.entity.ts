@@ -1,7 +1,6 @@
 import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
-
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -22,11 +21,11 @@ export class User {
   @Column()
   password: string;
 
-  @Column({nullable: true})
-  resetPasswordToken?: string
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  resetPasswordToken?: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  resetTokenExpire?: Date
+  resetTokenExpire?: Date | null;
 
   // Automatically generate UUID before inserting into the database
   @BeforeInsert()
